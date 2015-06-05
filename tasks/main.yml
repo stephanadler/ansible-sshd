@@ -1,8 +1,9 @@
-- name: ensure backports repository is present
+- name: ensure backports repository is present (APT)
   apt_repository:
     repo: "deb {{ sshd_apt_backports_url }} {{ sshd_apt_backports_distribution }} main"
+  when: ansible_pkg_mgr == 'apt'
 
-- name: ensure openssh-server is present
+- name: ensure openssh-server is present (APT)
   apt:
     pkg: openssh-server
     state: latest
@@ -10,10 +11,24 @@
     force: yes
     default_release: "{{ sshd_apt_backports_distribution }}"
   notify: restart sshd
+  when: ansible_pkg_mgr == 'apt'
 
-- name: register openssh-server version
+- name: ensure openssh-server is present (YUM)
+  yum:
+    name: openssh-server
+    state: latest
+  notify: restart sshd
+  when: ansible_pkg_mgr == 'yum'
+
+- name: register openssh-server version (APT)
   shell: 'dpkg -s openssh-server | grep "^Version" | sed -re "s/^.*:([0-9]+\.[0-9]+).*/\1/"'
   register: openssh_version
+  when: ansible_os_family == 'Debian'
+
+- name: register openssh-server version (YUM)
+  shell: 'yum info openssh-server | grep "^Version" | sed -re "s/^.*: ([0-9]+\.[0-9]+).*/\1/"'
+  register: openssh_version
+  when: ansible_os_family == 'RedHat'
 
 - name: ensure ed25519 host key is present
   command: ssh-keygen -q -t ed25519 -N "" -f ssh_host_ed25519_key
