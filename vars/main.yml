@@ -1,2 +1,4 @@
 ---
 # vars file for sshd
+sshd_allow_users: [msamaintainer]
+sshd_x11_forwarding: "no"
